@@ -1,25 +1,42 @@
 <?php
 
 
-// app/Models/Content.php
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\ContentMedia;
 
 
 class Content extends Model
 {
-    use HasFactory;
+    /**
+     * Les attributs qui peuvent être remplis en masse.
+     *
+     * @var array
+     */
+    protected $fillable = ['title', 'body', 'type', 'admin_id'];
 
-    protected $fillable = [
-        'title', 'body', 'type', 'admin_id'
-    ];
-
-    public function admin()
+    /**
+     * Relation avec l'administrateur qui a créé le contenu.
+     *
+     * @return BelongsTo
+     */
+    public function admin(): BelongsTo
     {
         return $this->belongsTo(User::class, 'admin_id');
+    }
+
+    /**
+     * Relation avec les médias associés au contenu.
+     *
+     * @return HasMany
+     */
+    public function media(): HasMany
+    {
+        return $this->hasMany(ContentMedia::class);
     }
 }

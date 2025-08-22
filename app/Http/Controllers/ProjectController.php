@@ -71,13 +71,5 @@ public function store(Request $request)
     }
 
     // Dans votre contrôleur
-public function dashboard()
-{
-    $users = User::all();
-    $projects = Project::all();
-    $contents = Content::all();
-    $alerts = Alert::all();
 
-    return view('dashboard', compact('users', 'projects', 'contents', 'alerts'));
-}
 }

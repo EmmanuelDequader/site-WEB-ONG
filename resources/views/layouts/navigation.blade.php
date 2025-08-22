@@ -85,7 +85,7 @@
                 </x-responsive-nav-link>
 
                 <!-- Authentication -->
-                <form method="post" action="{{ route('logout') }}">
+                <form method="POST" action="{{ route('logout') }}">
                     @csrf
 
                     <x-responsive-nav-link :href="route('logout')"
