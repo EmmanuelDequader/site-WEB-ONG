@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/ContentController.php
 
 namespace App\Http\Controllers;
 
@@ -9,24 +8,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\User;
 
-
 class ContentController extends Controller
 {
     /**
      * Affiche la liste des contenus.
-     *
-     * @return \Illuminate\Http\Response
      */
     public function index()
     {
-    $contents = Content::with('media')->get();
-    return view('contents.index', compact('contents'));
+        $contents = Content::with('media')->get();
+        return view('contents.index', compact('contents'));
     }
 
     /**
      * Affiche le formulaire pour créer un nouveau contenu.
-     *
-     * @return \Illuminate\Http\Response
      */
     public function create()
     {
@@ -35,50 +29,42 @@ class ContentController extends Controller
 
     /**
      * Enregistre un nouveau contenu.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\Response
      */
-    // app/Http/Controllers/ContentController.php
+    public function store(Request $request)
+    {
+        // Validation des données
+        $request->validate([
+            'title' => 'required',
+            'body' => 'required',
+            'type' => 'required',
+            'media' => 'array',
+            'media.*' => 'mimes:jpg,jpeg,png,mp4|max:5120',
+        ]);
 
-public function store(Request $request)
-{
-    // Validation des données
-    $request->validate([
-        'title' => 'required',
-        'body' => 'required',
-        'type' => 'required',
-        'media' => 'array',
-        'media.*' => 'mimes:jpg,jpeg,png,mp4|max:5120',
-    ]);
+        // Création du contenu
+        $content = Content::create([
+            'title' => $request->input('title'),
+            'body' => $request->input('body'),
+            'type' => $request->input('type'),
+            'admin_id' => auth()->id(),
+        ]);
 
-    // Création du contenu
-    $content = Content::create([
-        'title' => $request->input('title'),
-        'body' => $request->input('body'),
-        'type' => $request->input('type'),
-        'admin_id' => auth()->id(),
-    ]);
-
-    // Enregistrement des médias
-    if ($request->hasFile('media')) {
-        foreach ($request->file('media') as $file) {
-            $filePath = $file->store('public/content_media');
-            $content->media()->create([
-                'file_path' => $filePath,
-                'type' => $file->getClientMimeType() === 'video/mp4' ? 'video' : 'image',
-            ]);
+        // Enregistrement des médias
+        if ($request->hasFile('media')) {
+            foreach ($request->file('media') as $file) {
+                $filePath = $file->store('public/content_media');
+                $content->media()->create([
+                    'file_path' => $filePath,
+                    'type' => $file->getClientMimeType() === 'video/mp4' ? 'video' : 'image',
+                ]);
+            }
         }
-    }
 
-    return redirect()->route('contents.index');
-}
+        return redirect()->route('dashboard')->with('success', 'Actualité créée avec succès!');
+    }
 
     /**
      * Affiche un contenu.
-     *
-     * @param Content $content
-     * @return \Illuminate\Http\Response
      */
     public function show(Content $content)
     {
@@ -87,9 +73,6 @@ public function store(Request $request)
 
     /**
      * Affiche le formulaire pour modifier un contenu.
-     *
-     * @param Content $content
-     * @return \Illuminate\Http\Response
      */
     public function edit(Content $content)
     {
@@ -98,26 +81,32 @@ public function store(Request $request)
 
     /**
      * Met à jour un contenu.
-     *
-     * @param Request $request
-     * @param Content $content
-     * @return \Illuminate\Http\Response
      */
 public function update(Request $request, Content $content)
 {
-    // Validation des données
+     try {
+    // Valider les données
     $request->validate([
         'title' => 'required',
         'body' => 'required',
         'type' => 'required',
-        'media' => 'array',
-        'media.*' => 'mimes:jpg,jpeg,png,mp4|max:5120',
     ]);
 
-    // Mise à jour du contenu
-    $content->update($request->all());
+    // Mettre à jour l'actualité
+    $content->title = $request->input('title');
+    $content->body = $request->input('body');
+    $content->type = $request->input('type');
+    $content->save();
 
-    // Enregistrement des nouveaux médias
+    // Supprimer les médias non cochés
+    if ($request->has('existing_media')) {
+        $existingMediaIds = $request->input('existing_media');
+        $content->media()->whereNotIn('id', $existingMediaIds)->delete();
+    } else {
+        $content->media()->delete();
+    }
+
+    // Ajouter de nouveaux médias
     if ($request->hasFile('media')) {
         foreach ($request->file('media') as $file) {
             $filePath = $file->store('public/content_media');
@@ -128,17 +117,18 @@ public function update(Request $request, Content $content)
         }
     }
 
-    return redirect()->route('contents.index');
+        return redirect()->route('dashboard')->with('success', 'Actualité mise à jour avec succès!');
+    } catch (\Exception $e) {
+        Log::error($e->getMessage());
+        return response()->view('errors.500', [], 500);
+    }
 }
     /**
      * Supprime un contenu.
-     *
-     * @param Content $content
-     * @return \Illuminate\Http\Response
      */
     public function destroy(Content $content)
     {
         $content->delete();
-        return redirect()->route('contents.index');
+        return redirect()->route('dashboard')->with('success', 'Actualité supprimée avec succès!');
     }
 }

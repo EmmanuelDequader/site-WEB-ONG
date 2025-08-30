@@ -1,5 +1,4 @@
 <?php
-// app/Models/User.php
 
 namespace App\Models;
 
@@ -8,7 +7,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Project;
 use App\Models\Don;
-
 
 class User extends Authenticatable
 {
@@ -28,7 +26,6 @@ class User extends Authenticatable
         return $this->hasMany(Don::class);
     }
 
-
     protected $hidden = [
         'password',
         'remember_token',
@@ -40,11 +37,16 @@ class User extends Authenticatable
 
     public function isAdmin()
     {
-        return $this->role === 'admin' || $this->role === 'super-admin';
+        return $this->role === 'admin' || $this->role === 'super-admin'; // CORRIGÉ
     }
 
     public function isSuperAdmin()
     {
-        return $this->role === 'super-admin';
+        return $this->role === 'super-admin'; // CORRIGÉ
+    }
+
+    public function hasRole($role)
+    {
+        return $this->role === $role;
     }
 }

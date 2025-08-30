@@ -35,5 +35,11 @@
                 {{ __('Reset Password') }}
             </x-primary-button>
         </div>
+        <!-- Ajouter cette section à la fin du formulaire -->
+<div class="register-link">
+    <a href="{{ route('login') }}" class="btn-register">
+        Retour à la connexion
+    </a>
+</div>
     </form>
 </x-guest-layout>

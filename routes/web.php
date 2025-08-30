@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProjectController;
@@ -11,6 +12,8 @@ use App\Models\Alert;
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ActualiteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,16 +23,56 @@ use Illuminate\Support\Facades\Auth;
 | Here is where you can register web routes for your application. These
 | routes are loaded by the RouteServiceProvider and all of them will
 | be assigned to the "web" middleware group. Make something great!
-|
 */
 
-// Route de base
-Route::get('/', function () {
-    return view('layout');
+// Route de base avec contrôleur
+Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Page de dons
+Route::get('/dons', [DonController::class, 'index'])->name('dons.index');
+Route::post('/dons', [DonController::class, 'store'])->name('dons.store');
+
+// Groupe de routes pour l'administration des utilisateurs
+Route::middleware(['auth', 'checkRole:super-admin'])->group(function () {
+    // Route pour changer le rôle d'un utilisateur
+    Route::post('/admin/users/{user}/toggle-role', [UserController::class, 'toggleRole'])
+        ->name('admin.toggle-role');
+    
+    // Route pour supprimer un utilisateur
+    Route::delete('/admin/users/{user}', [UserController::class, 'deleteUser'])
+        ->name('admin.delete-user');
 });
 
-// Route de dashboard
-Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+// Routes pour la gestion des contenus/actualités
+Route::resource('contents', ContentController::class);
+
+// Routes pour la gestion des projets
+Route::resource('projects', ProjectController::class);
+
+// Routes pour la gestion des utilisateurs (admin seulement)
+Route::middleware(['auth', 'checkRole:admin,super-admin'])->group(function () {
+    // Routes pour toggle role et delete user
+    Route::post('/admin/users/{user}/toggle-role', [DashboardController::class, 'toggleRole'])
+        ->name('admin.toggle-role');
+    
+    Route::delete('/admin/users/{user}', [DashboardController::class, 'deleteUser'])
+        ->name('admin.delete-user');
+});
+
+// Routes pour les actualités
+Route::get('/actualites', [ActualiteController::class, 'index'])->name('actualites.index');
+Route::get('/actualites/{id}', [ActualiteController::class, 'show'])->name('actualites.show');
+
+// Routes d'authentification Laravel Breeze
+require __DIR__.'/auth.php';
+
+// Route de dashboard - UNE SEULE DÉFINITION
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'checkRole:admin,super-admin'])
+    ->name('dashboard');
+
+// Route pour l'envoi de messages de contact
+Route::post('/contact/send', [ContactController::class, 'send'])->name('contact.send');
 
 // Route de mise à jour du rôle d'un utilisateur
 Route::put('/users/{id}/update-role', [UserController::class, 'updateRole'])->name('users.update-role');
@@ -43,9 +86,6 @@ Route::middleware('auth')->group(function () {
     // Route de suppression du profil
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
-
-// Inclusion des routes d'authentification
-require __DIR__.'/auth.php';
 
 // Route de gestion des projets
 Route::resource('projects', ProjectController::class);
@@ -76,6 +116,13 @@ Route::middleware(['auth', 'checkRole:admin'])->group(function () {
     Route::delete('/projects/{id}', [ProjectController::class, 'destroy']);
 });
 
-// Route de gestion des dons
-Route::post('/dons', [DonController::class, 'store'])->name('dons.store');
-Route::get('/dons', [DonController::class, 'index'])->name('dons.index')->middleware('admin');
+// Route pour afficher le formulaire de contact
+Route::get('/contact', [ContactController::class, 'show'])->name('contact');
+Route::post('/contact/send', [ContactController::class, 'send'])->name('contact.send');
+
+// Route pour les notifications CinetPay
+Route::post('/cinetpay/notification', [DonController::class, 'handleNotification'])->name('cinetpay.notification');
+
+// Route pour le retour après paiement
+Route::get('/don/merci', [DonController::class, 'thankYou'])->name('don.merci');
+Route::get('/don/erreur', [DonController::class, 'error'])->name('don.error');

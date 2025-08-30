@@ -9,6 +9,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -23,14 +26,21 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
-    {
-        $request->authenticate();
+// app/Http/Controllers/Auth/AuthenticatedSessionController.php
 
-        $request->session()->regenerate();
+public function store(LoginRequest $request): RedirectResponse
+{
+    $request->authenticate();
+    $request->session()->regenerate();
 
-        return redirect()->intended(RouteServiceProvider::HOME);
+    $user = Auth::user();
+    
+    if ($user->hasRole('super-admin') || $user->hasRole('admin')) {
+        return redirect()->intended(route('dashboard', absolute: false));
     }
+    
+    return redirect()->intended(route('home', absolute: false));
+}
 
     /**
      * Destroy an authenticated session.

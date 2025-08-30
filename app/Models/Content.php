@@ -18,7 +18,7 @@ class Content extends Model
      *
      * @var array
      */
-    protected $fillable = ['title', 'body', 'type', 'admin_id'];
+    protected $fillable = ['title', 'body', 'type', 'admin_id', 'auteur'];
 
     /**
      * Relation avec l'administrateur qui a créé le contenu.
@@ -35,8 +35,9 @@ class Content extends Model
      *
      * @return HasMany
      */
-    public function media(): HasMany
-    {
-        return $this->hasMany(ContentMedia::class);
-    }
+// app/Models/Content.php
+public function media()
+{
+    return $this->hasMany(ContentMedia::class);
+}
 }

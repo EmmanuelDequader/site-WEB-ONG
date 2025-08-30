@@ -1,7 +1,5 @@
 <?php
 
-// app/Http/Controllers/DonController.php
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -9,25 +7,24 @@ use App\Models\Don;
 
 class DonController extends Controller
 {
+    public function index()
+    {
+        return view('dons.index');
+    }
 
-public function index()
-{
-    $dons = Don::with('user', 'project')->get();
-    return view('dons.index', compact('dons'));
-}
     public function store(Request $request)
     {
         $request->validate([
-            'amount' => 'required|numeric',
-            'project_id' => 'required|exists:projects,id',
+            'amount' => 'required|numeric|min:1000',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email',
+            'phone' => 'nullable|string',
+            'message' => 'nullable|string'
         ]);
 
-        $don = new Don();
-        $don->amount = $request->amount;
-        $don->project_id = $request->project_id;
-        $don->user_id = auth()->id();
-        $don->save();
+        // Ici vous pouvez enregistrer le don dans la base de données
+        // ou traiter le paiement selon votre système
 
-        return redirect()->back()->with('success', 'Don effectué avec succès');
+        return redirect()->back()->with('success', 'Merci pour votre don !');
     }
 }
